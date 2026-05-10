@@ -1,192 +1,112 @@
-// ==================== ВОПРОСЫ ====================
 const questions = [
-    {
-        text: "Что означает аббревиатура HTML?",
-        options: [
-            "Hyper Text Markup Language",
-            "Home Tool Markup Language",
-            "Hyperlinks and Text Markup Language",
-            "High-Level Text Management Language"
-        ],
-        correct: 0
-    },
-    {
-        text: "Какой тег используется для создания ссылки?",
-        options: ["<a>", "<link>", "<href>", "<url>"],
-        correct: 0
-    },
-    {
-        text: "Какое CSS-свойство изменяет цвет текста?",
-        options: ["text-color", "color", "font-color", "background-color"],
-        correct: 1
-    },
-    {
-        text: "Как объявить переменную в JavaScript с блочной областью видимости?",
-        options: ["var", "let", "const", "let и const"],
-        correct: 3
-    },
-    {
-        text: "Какой метод массива добавляет элемент в конец?",
-        options: ["push()", "pop()", "unshift()", "append()"],
-        correct: 0
-    },
-    {
-        text: "Что выведет console.log(typeof null)?",
-        options: ["null", "undefined", "object", "number"],
-        correct: 2
-    },
-    {
-        text: "Какой селектор выбирает элемент с id='header'?",
-        options: [".header", "#header", "header", "*header"],
-        correct: 1
-    },
-    {
-        text: "Какое свойство делает контейнер гибким (Flexbox)?",
-        options: ["display: flex", "display: block", "flex-container", "position: flex"],
-        correct: 0
-    },
-    {
-        text: "Какой тег используется для подключения JavaScript в HTML?",
-        options: ["<js>", "<javascript>", "<script>", "<code>"],
-        correct: 2
-    },
-    {
-        text: "Что такое семантическая вёрстка?",
-        options: [
-            "Использование тегов, описывающих содержание (header, article)",
-            "Код, который быстрее загружается",
-            "Вёрстка без CSS",
-            "Использование только div и span"
-        ],
-        correct: 0
-    }
+    { text: "Что означает HTML?", options: ["Hyper Text Markup Language", "Home Tool Markup", "Hyperlinks Text", "High Level Text"], correct: 0 },
+    { text: "Какой тег для ссылки?", options: ["<a>", "<link>", "<href>", "<url>"], correct: 0 },
+    { text: "CSS свойство для цвета текста?", options: ["text-color", "color", "font-color", "bgcolor"], correct: 1 },
+    { text: "Как объявить переменную в JS?", options: ["var", "let", "const", "Все варианты"], correct: 3 },
+    { text: "Метод массива для добавления в конец?", options: ["push()", "pop()", "shift()", "unshift()"], correct: 0 },
+    { text: "Что выведет typeof null?", options: ["null", "undefined", "object", "number"], correct: 2 },
+    { text: "Селектор по id?", options: [".id", "#id", "id", "*id"], correct: 1 },
+    { text: "Flexbox: display?", options: ["flex", "block", "inline", "grid"], correct: 0 },
+    { text: "Тег для JavaScript?", options: ["<js>", "<javascript>", "<script>", "<code>"], correct: 2 },
+    { text: "Что такое семантическая вёрстка?", options: ["Теги по смыслу", "Быстрая загрузка", "Без CSS", "Только div"], correct: 0 }
 ];
 
-// ==================== ПЕРЕМЕННЫЕ СОСТОЯНИЯ ====================
-let currentIndex = 0;
-let userAnswers = new Array(questions.length).fill(null);
-let quizFinished = false;
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+let finished = false;
+let best = localStorage.getItem("bestScore");
+if (best) best = parseInt(best); else best = null;
 
-let bestScore = localStorage.getItem('quizBestScore');
-if (bestScore !== null) bestScore = parseInt(bestScore);
-else bestScore = null;
+const quizDiv = document.getElementById("quizContainer");
+const resultDiv = document.getElementById("resultContainer");
+const questionText = document.getElementById("questionText");
+const optionsDiv = document.getElementById("optionsContainer");
+const nextBtn = document.getElementById("nextBtn");
+const bestDisplay = document.getElementById("bestScore");
+const scoreSpan = document.getElementById("score");
+const totalSpan = document.getElementById("total");
+const messageSpan = document.getElementById("resultMessage");
+const restartBtn = document.getElementById("restartBtn");
 
-// ==================== DOM ЭЛЕМЕНТЫ ====================
-const quizContainer = document.getElementById('quizContainer');
-const resultContainer = document.getElementById('resultContainer');
-const questionText = document.getElementById('questionText');
-const optionsContainer = document.getElementById('optionsContainer');
-const nextBtn = document.getElementById('nextBtn');
-const questionCounterSpan = document.getElementById('questionCounter');
-const bestScoreSpan = document.getElementById('bestScore');
-const scoreSpan = document.getElementById('score');
-const totalSpan = document.getElementById('total');
-const resultMessageSpan = document.getElementById('resultMessage');
-const restartBtn = document.getElementById('restartBtn');
+function updateBestUI() {
+    bestDisplay.innerText = best ? `🏆 Лучший: ${best}/${questions.length}` : "🏆 Лучший: --";
+}
 
-// ==================== ФУНКЦИИ ====================
-function updateBestScoreUI() {
-    if (bestScore !== null) {
-        bestScoreSpan.innerText = `🏆 Лучший: ${bestScore}/${questions.length}`;
-    } else {
-        bestScoreSpan.innerText = `🏆 Лучший: --`;
+function saveBest(score) {
+    if (best === null || score > best) {
+        best = score;
+        localStorage.setItem("bestScore", best);
+        updateBestUI();
     }
 }
 
-function saveBestScoreIfNeeded(score) {
-    if (bestScore === null || score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('quizBestScore', bestScore);
-        updateBestScoreUI();
-    }
-}
-
-function renderCurrentQuestion() {
-    if (quizFinished) return;
-    const q = questions[currentIndex];
+function render() {
+    if (finished) return;
+    let q = questions[current];
     questionText.innerText = q.text;
-    questionCounterSpan.innerText = `Вопрос ${currentIndex+1} из ${questions.length}`;
-
-    optionsContainer.innerHTML = '';
+    document.getElementById("questionCounter").innerText = `Вопрос ${current+1} из ${questions.length}`;
+    optionsDiv.innerHTML = "";
     q.options.forEach((opt, idx) => {
-        const optDiv = document.createElement('div');
-        optDiv.classList.add('option');
-        
-        if (userAnswers[currentIndex] !== null) {
-            optDiv.classList.add('disabled-option');
-            if (userAnswers[currentIndex] === idx) optDiv.classList.add('selected');
+        let btn = document.createElement("div");
+        btn.className = "option";
+        if (answers[current] === idx) btn.classList.add("selected");
+        btn.innerText = String.fromCharCode(65+idx) + ". " + opt;
+        if (answers[current] === null) {
+            btn.onclick = () => select(idx);
         } else {
-            optDiv.addEventListener('click', () => selectAnswer(idx));
+            btn.classList.add("disabled-option");
         }
-        
-        const prefix = String.fromCharCode(65 + idx);
-        optDiv.innerHTML = `<span style="font-weight:bold">${prefix}.</span> ${opt}`;
-        optionsContainer.appendChild(optDiv);
+        optionsDiv.appendChild(btn);
     });
-    
-    nextBtn.disabled = (userAnswers[currentIndex] === null);
+    nextBtn.disabled = (answers[current] === null);
 }
 
-function selectAnswer(selectedIdx) {
-    if (quizFinished) return;
-    if (userAnswers[currentIndex] !== null) return;
-    
-    userAnswers[currentIndex] = selectedIdx;
-    renderCurrentQuestion();
+function select(idx) {
+    if (finished) return;
+    if (answers[current] !== null) return;
+    answers[current] = idx;
+    render();
 }
 
-function nextQuestion() {
+function next() {
     if (nextBtn.disabled) return;
-    
-    if (currentIndex + 1 < questions.length) {
-        currentIndex++;
-        renderCurrentQuestion();
+    if (current + 1 < questions.length) {
+        current++;
+        render();
     } else {
-        finishQuiz();
+        finish();
     }
 }
 
-function finishQuiz() {
-    quizFinished = true;
-    
-    let correctCount = 0;
+function finish() {
+    finished = true;
+    let correct = 0;
     for (let i = 0; i < questions.length; i++) {
-        if (userAnswers[i] === questions[i].correct) correctCount++;
+        if (answers[i] === questions[i].correct) correct++;
     }
-    
-    saveBestScoreIfNeeded(correctCount);
-    
-    scoreSpan.innerText = correctCount;
+    saveBest(correct);
+    scoreSpan.innerText = correct;
     totalSpan.innerText = questions.length;
-    
-    let msg = '';
-    if (correctCount === questions.length) msg = '🌟 Превосходно! Вы настоящий эксперт!';
-    else if (correctCount >= 8) msg = '👍 Очень хорошо! Почти идеально.';
-    else if (correctCount >= 5) msg = '📚 Неплохо, но стоит повторить теорию.';
-    else msg = '💪 Попробуйте ещё раз – веб-технологии ждут вас!';
-    resultMessageSpan.innerText = msg;
-    
-    quizContainer.classList.add('hidden');
-    resultContainer.classList.remove('hidden');
+    let msg = "";
+    if (correct === questions.length) msg = "🎉 Превосходно! Вы эксперт!";
+    else if (correct >= 8) msg = "👍 Отлично!";
+    else if (correct >= 5) msg = "📚 Хорошо, но можно лучше.";
+    else msg = "💪 Попробуйте ещё раз.";
+    messageSpan.innerText = msg;
+    quizDiv.classList.add("hidden");
+    resultDiv.classList.remove("hidden");
 }
 
-function restartQuiz() {
-    currentIndex = 0;
-    userAnswers.fill(null);
-    quizFinished = false;
-    
-    resultContainer.classList.add('hidden');
-    quizContainer.classList.remove('hidden');
-    
-    renderCurrentQuestion();
+function restart() {
+    current = 0;
+    answers.fill(null);
+    finished = false;
+    resultDiv.classList.add("hidden");
+    quizDiv.classList.remove("hidden");
+    render();
 }
 
-function init() {
-    updateBestScoreUI();
-    renderCurrentQuestion();
-    nextBtn.addEventListener('click', nextQuestion);
-    restartBtn.addEventListener('click', restartQuiz);
-}
-
-// Запуск
-init();
+nextBtn.onclick = next;
+restartBtn.onclick = restart;
+updateBestUI();
+render();
